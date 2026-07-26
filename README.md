@@ -10,7 +10,7 @@ npm install         # topic-pages 의존성 설치
 npm run build       # dist/ 정적 HTML 생성
 ```
 
-`dist/index.html` + `dist/assets/` 번들로 동작하는 **단일 페이지 앱**이다.
+`dist/index.html` + `dist/assets/` 번들로 동작하는 위키 페이지 앱이다.
 
 `assets/`의 이미지·파비콘 등 추가 에셋도 빌드 시 자동으로 `dist/assets/`에 복사된다.
 
