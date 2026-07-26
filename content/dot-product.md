@@ -122,7 +122,7 @@ if cosAngle > cos(halfFOV):
 
 ## 4. 투영 (Projection)
 
-![투영과 반사 개요](/assets/clip_20260718_190546_1.png)
+![투영과 반사 개요](../assets/clip_20260718_190546_1.png)
 
 벡터 a를 벡터 b 위에 투영(projection)이란, **a에서 b가 놓인 직선에 수선을 내려 그 수선의 발을 찾는 연산**이다. 결과 벡터는 b와 평행하다. 직교 성분 $a - \text{proj}_b(a)$는 b에 수직이다.
 
