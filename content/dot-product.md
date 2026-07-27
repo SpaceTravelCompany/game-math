@@ -124,7 +124,7 @@ if cosAngle > cos(halfFOV):
 
 ![투영과 반사 개요](../assets/clip_20260718_190546_1.png)
 
-벡터 a를 벡터 b 위에 투영(projection)이란, **a에서 b가 놓인 직선에 수선을 내려 그 수선의 발을 찾는 연산**이다. 결과 벡터는 b와 평행하다. 직교 성분 $a - \text{proj}_b(a)$는 b에 수직이다.
+벡터 a를 벡터 b 위에 투영(projection)이란, **a에서 b가 놓인 직선에 수선을 내려 그 수선의 발을 찾는 연산**이다. 결과 벡터는 b와 평행하다 — 정확히는 b가 놓인 직선 위에 있는 공선형(collinear) 벡터로, 방향은 스칼라 투영의 부호에 따라 b와 같거나 b의 반대이며 길이만 다르다. 직교 성분 $a - \text{proj}_b(a)$는 b에 수직이다.
 
 이 결과의 길이는 $|\text{스칼라 투영}|$이다. 스칼라 투영 $\text{comp}_{\mathbf{b}}(\mathbf{a}) = \mathbf{a} \cdot \hat{\mathbf{b}}$ 자체는 부호 있는 값으로, 반대 방향이면 음수다(아래 스칼라 투영 절 참고). 여기에 방향을 포함한 것이 벡터 투영(vector projection)이다.
 
@@ -148,7 +148,7 @@ $$\text{comp}_{\mathbf{b}}(\mathbf{a}) = \mathbf{a} \cdot \hat{\mathbf{b}} = |\m
 $$\text{proj}_{\mathbf{b}}(\mathbf{a}) = (\mathbf{a} \cdot \hat{\mathbf{b}}) \times \hat{\mathbf{b}}$$
 
 > **핵심**
-> proj_b(a)는 b에 평행한 벡터이고, **a - proj_b(a)는 b에 수직**이다. 이 두 벡터의 내적은 0이다.
+> proj_b(a)는 b와 공선형(같은 직선 위, 방향은 스칼라 투영 부호에 따라 같거나 반대)이고, **a - proj_b(a)는 b에 수직**이다. 이 두 벡터의 내적은 0이다.
 
 b가 단위 벡터가 아니라면 정규화해서 쓰거나 동등한 형태를 쓸 수 있다:
 
