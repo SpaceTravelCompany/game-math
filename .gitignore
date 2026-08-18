@@ -2,6 +2,7 @@ node_modules/
 dist/
 .build-cache/
 package-lock.json
+.opencode/
 
 .DS_Store
 Thumbs.db
