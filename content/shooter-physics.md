@@ -208,12 +208,23 @@ drawLine(origin, end, color, 0.1f);
 
 ### 탄도 예측 — 타겟 리드 (Lead)
 
-움직이는 적을 맞추기 위해 조준선 앞쪽을 예측:
+움직이는 적을 맞추기 위해 조준선 앞쪽을 예측. 총알이 발사 시점 $t$ 후에 적에게 닿는다면, 도달 조건은 "발사점과 적의 미래 위치 사이의 거리 = 총알 속도 × $t$":
+
+$$|\mathbf{d} + \mathbf{v}_t \cdot t| = s \cdot t \quad (\mathbf{d} = \mathbf{pos}_{\text{target}} - \mathbf{pos}_{\text{origin}},\; s = \text{bulletSpeed})$$
+
+양변을 제곱하면 $t$에 대한 2차 방정식이 된다 (시간 $t$에서의 위치 제곱 = 도달 거리 제곱):
+
+$$(\mathbf{v}_t \cdot \mathbf{v}_t - s^2)\, t^2 + 2(\mathbf{v}_t \cdot \mathbf{d})\, t + (\mathbf{d} \cdot \mathbf{d}) = 0$$
 
 ```text
 // 단순 리드: 적 속도 고려
-vec3 relativeVel = bulletSpeed * dir - target.velocity;
-float t = solveQuadratic(relativeVel);  // 최소 시간
+float s = bulletSpeed;
+vec3 d = target.position - origin;
+float a = dot(target.velocity, target.velocity) - s * s;
+float b = 2.0 * dot(target.velocity, d);
+float c = dot(d, d);
+
+float t = solveQuadratic(a, b, c);  // 양수 근 중 최소값 (없으면 리드 불가)
 vec3 aimPoint = target.position + target.velocity * t;
 ```
 

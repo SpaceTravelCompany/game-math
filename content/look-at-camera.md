@@ -29,11 +29,11 @@ $$
 > **주의**: 여기서 forward는 카메라가 바라보는 방향(-Z, 타깃에서 멀어지는 방향). **《외적》 문서 §7**의 forward는 타깃을 향하는 방향(+Z)으로 정의가 반대이므로 문맥을 구분할 것.
 
 $$
-\mathbf{right} = \text{normalize}(\mathbf{up} \times \mathbf{forward})
+\mathbf{right} = \text{normalize}(\mathbf{forward} \times \mathbf{up})
 $$
 
 $$
-\mathbf{cameraUp} = \mathbf{forward} \times \mathbf{right}
+\mathbf{cameraUp} = \mathbf{right} \times \mathbf{forward}
 $$
 
 ### 뷰 행렬 (View Matrix)
@@ -96,7 +96,7 @@ $$
 $$
 
 $$
-\mathbf{right} = \mathbf{up} \times \mathbf{forward} \quad (\mathbf{forward} \parallel \mathbf{up} \Rightarrow \mathbf{right} = \mathbf{0})
+\mathbf{right} = \mathbf{forward} \times \mathbf{up} \quad (\mathbf{forward} \parallel \mathbf{up} \Rightarrow \mathbf{right} = \mathbf{0})
 $$
 
 이 경우 카메라 행렬이 붕괴됨
@@ -314,8 +314,8 @@ viewMatrix = lookAt(finalPos, target, worldUp)
 | 요소 | 공식/설명 |
 |------|----------|
 | Forward | normalize(eye - target) |
-| Right | normalize(cross(up, forward)) |
-| Up | cross(forward, right) |
+| Right | normalize(cross(forward, up)) |
+| Up | cross(right, forward) |
 | View 행렬 | [R^T, -R^T × eye; 0, 1] |
 | 빌보드 | 뷰 행렬의 right/up 사용 |
 | 짐벌락 방지 | forward ∥ up 체크 |

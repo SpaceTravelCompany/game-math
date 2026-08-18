@@ -168,16 +168,16 @@ $$j_t = \text{clamp}(j_t,\; -\mu\,j_n,\; \mu\,j_n)$$
 여기서 $\mu$는 마찰 계수, $j_n$은 법선 임펄스 크기다.
 
 ```text
-// 접선 마찰 적용
+// 접선 마찰 적용 — invMass = 1/mass (§3 실전 코드와 동일한 스타일)
 float relVt = (vx_A - vx_B) * tx + (vy_A - vy_B) * ty;
 float jt = -relVt / invMassSum;
 float maxFriction = mu * abs(j);  // j는 법선 임펄스
 jt = clamp(jt, -maxFriction, maxFriction);
 
-vx_A += (jt / massA) * tx;
-vy_A += (jt / massA) * ty;
-vx_B -= (jt / massB) * tx;
-vy_B -= (jt / massB) * ty;
+vx_A += jt * a.invMass * tx;
+vy_A += jt * a.invMass * ty;
+vx_B -= jt * b.invMass * tx;
+vy_B -= jt * b.invMass * ty;   // 정적 물체(invMass=0)면 자동으로 미변경
 ```
 
 **마찰 계수 예시:**
@@ -206,14 +206,14 @@ $$\mathbf{p}_A' = \mathbf{p}_A + \frac{\text{correction}}{1/m_A + 1/m_B} \cdot \
 $$\mathbf{p}_B' = \mathbf{p}_B - \frac{\text{correction}}{1/m_A + 1/m_B} \cdot \frac{1}{m_B}$$
 
 ```text
-// 위치 보정 (Baumgarte)
+// 위치 보정 (Baumgarte) — invMass = 1/mass, 정적 물체는 invMass = 0 (§3 코드와 동일한 스타일)
 float slop = 0.01f;            // 허용 오차
 float correctionFactor = 0.8f; // 보정 강도
 float correction = max(depth - slop, 0.0f)
-                * correctionFactor / invMassSum;
+                * correctionFactor / (a.invMass + b.invMass);
 
-pA += correction / massA * n;
-pB -= correction / massB * n;
+pA += correction * a.invMass * n;
+pB -= correction * b.invMass * n;   // 정적 물체면 자동으로 0 → 미이동
 ```
 
 > **슬랍(Slop)**: 아주 작은 관통($<$ slop)은 무시한다. 이는 물체가 바닥에 닿았을 때 미세하게 떠 있는 현상을 방지하고 안정성을 높인다(본 문서 §5 위치 보정의 `correction = max(depth - slop, 0)` 참조).

@@ -148,7 +148,7 @@ $$
 
 이로 인해:
 - **근처 해상도 높음**: near plane 근처의 z값이 넓게 퍼짐
-- **원처 해상도 낮음**: far plane 근처의 z값이 밀집됨
+- **원거리 해상도 낮음**: far plane 근처의 z값이 밀집됨
 - **Z-파이팅**: 먼 거리에서 깊이값이 겹쳐 깜빡임
 
 ### Z-파이팅 방지
@@ -168,8 +168,8 @@ ratio = far / near      // 이 값이 클수록 z-파이팅 심함
 ### Reversed-Z
 
 ```text
-// 전통적: near = 0, far = 1 (근처가 정밀)
-// Reversed-Z: near = 1, far = 0 (원처가 정밀)
+// 전통적(D3D [0,1]): near = 0, far = 1 (근처가 정밀) — OpenGL(-1~1)은 near = -1, far = 1
+// Reversed-Z: near = 1, far = 0 (원거리가 정밀)
 // 부동소수점 정밀도 분포상 Reversed-Z가 전체적으로 더 균등
 ```
 

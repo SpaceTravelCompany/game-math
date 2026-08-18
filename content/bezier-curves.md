@@ -260,8 +260,8 @@ controlPoints = [
 function getCameraPosition(t):
     // t를 세그먼트 인덱스와 로컬 t로 분할
     // N = len(controlPoints) (제어점 개수; 세그먼트 수 = N - 3)
-    segIndex = floor(t × (N-1))
-    localT = t × (N-1) - segIndex
+    segIndex = floor(t × (N-3))
+    localT = t × (N-3) - segIndex
 
     P0 = controlPoints[segIndex - 1]
     P1 = controlPoints[segIndex]

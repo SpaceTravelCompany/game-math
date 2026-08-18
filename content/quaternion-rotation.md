@@ -16,6 +16,8 @@ slug: quaternion-rotation
 
 세 개의 회전 각도(pitch, yaw, roll)로 3D 회전을 표현한다.
 
+> **관례**: 본 문서는 **Z-up 월드**의 ZYX 관례(§9 참고)를 쓴다: pitch=Y축, yaw=Z축, roll=X축. Y-up 월드(《LookAt》 §7)는 yaw→Y축, pitch→X축으로 대응이 바뀌므로 주의.
+
 - **pitch** (Y축): 위/아래
 - **yaw** (Z축): 좌/우
 - **roll** (X축): 좌/우 기울임

@@ -53,10 +53,10 @@ $$
 
 ### 오른손 좌표계 vs 왼손 좌표계
 
-| 좌표계 | 엔진 | 법칙 |
-|--------|------|------|
-| 오른손 좌표계 | OpenGL, Vulkan | $\mathbf{a} \times \mathbf{b} = +\mathbf{n}$ (오른손 법칙) |
-| 왼손 좌표계 | DirectX, Unity | $\mathbf{a} \times \mathbf{b} = +\mathbf{n}$ (왼손 법칙) |
+| 좌표계 | 엔진 | 외적 수식 (좌표계 무관 동일) |
+|--------|------|------------------------------|
+| 오른손 좌표계 | OpenGL, Vulkan | $\mathbf{a} \times \mathbf{b} = \mathbf{n}$ (오른손 법칙으로 해석) |
+| 왼손 좌표계 | DirectX, Unity | $\mathbf{a} \times \mathbf{b} = \mathbf{n}$ (왼손 법칙으로 해석) |
 
 > **주의**: 외적 공식 자체는 좌표계 핸드니스와 무관하게 같다. 차이는 **시각적 방향 해석**에 있다. 같은 외적 결과라도 오른손 좌표계에서는 오른손 법칙, 왼손 좌표계에서는 왼손 법칙으로 해석된다. 엔진마다 forward 벡터의 방향(+Z 또는 -Z)이 다르므로, 외적 순서나 부호가 다르게 나타날 수 있다.
 
@@ -125,7 +125,7 @@ result = cross(AB, AP)
 
 if result > 0:  // P는 AB의 왼쪽
 if result < 0:  // P는 AB의 오른쪽
-if result = 0:  // P는 AB 위에 있음 (일직선)
+if result == 0:  // P는 AB 위에 있음 (일직선)
 ```
 
 **게임에서의 활용:**
@@ -194,7 +194,7 @@ right = normalize(cross(forward, worldUp))
 up = cross(right, forward)
 
 // 이제 카메라 행렬을 구성할 수 있다
-// View 행렬 = [right, up, -forward, -position]
+// View 행렬: 회전부 = [right, up, -forward]ᵀ, 이동부 = -Rᵀ·cameraPos (표기는 《LookAt》 §1 참고)
 ```
 
 > **주의**: 여기서 forward는 '타깃을 향하는' 방향(+Z 쪽). 반면 **《LookAt & 카메라》 문서 §1**의 forward는 `eye - target`(카메라가 바라보는 -Z 방향)으로 부호가 반대이므로, 두 문서의 forward는 '향하는 방향' 정의가 다름에 유의.

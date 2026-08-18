@@ -229,7 +229,7 @@ function shuffle(arr):
 | Mersenne Twister | 보통 | $2^{19937}$ | 높음 | 일반적 |
 | Xorshift | 매우 빠름 | $2^{128}$ | 보통 | 실시간 게임 |
 | PCG | 빠름 | $2^{64}$ | 높음 | 현대 게임 |
-| Halton/Sobol | 느림 | — | 낮음(편향) | **안 됨** |
+| Halton/Sobol | 느림 | — | 저불일치 수열 (랜덤 아님, 결정적 분포) | **안 됨** |
 
 > **실전 팁**: 게임에서는 PCG(Permuted Congruential Generator)를 추천한다. 빠르고 품질이 좋으며, 시드 재현이 완벽하다.
 
