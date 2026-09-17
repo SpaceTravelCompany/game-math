@@ -20,34 +20,35 @@ LookAt은 카메라(또는 객체)가 특정 위치를 바라보도록 하는 �
 - **target**: 바라볼 위치
 - **up**: 위쪽 방향 (보통 (0,1,0))
 
-### 축 계산
+### 축 계산 (오른손 좌표계 / OpenGL 기준)
 
-$$
-\mathbf{forward} = \text{normalize}(\mathbf{eye} - \mathbf{target}) \quad \text{(주의: -Z 방향)}
-$$
+오른손 좌표계에서는 카메라가 **$-Z$ 방향**을 바라본다. 따라서 카메라의 로컬 $+Z$축은 시선 반대 방향($\mathbf{eye} - \mathbf{target}$)이 된다.
 
-> **주의**: 여기서 forward는 카메라가 바라보는 방향(-Z, 타깃에서 멀어지는 방향). **《외적》 문서 §7**의 forward는 타깃을 향하는 방향(+Z)으로 정의가 반대이므로 문맥을 구분할 것.
+1. **시선 방향 (Forward / 타깃을 향하는 방향)**:
+   $$\mathbf{f} = \text{normalize}(\mathbf{target} - \mathbf{eye})$$
 
-$$
-\mathbf{right} = \text{normalize}(\mathbf{forward} \times \mathbf{up})
-$$
+2. **카메라 로컬 Z축 (시선의 반대 방향)**:
+   $$\mathbf{z}_c = -\mathbf{f} = \text{normalize}(\mathbf{eye} - \mathbf{target})$$
 
-$$
-\mathbf{cameraUp} = \mathbf{right} \times \mathbf{forward}
-$$
+3. **오른쪽 방향 (Right / 로컬 X축)**:
+   $$\mathbf{right} = \text{normalize}(\mathbf{f} \times \mathbf{up})$$
+   > $(0,0,-1) \times (0,1,0) = (1,0,0)$ 이므로 정확히 오른쪽($+X$)을 가리킨다. ($\mathbf{up} \times \mathbf{z}_c$ 와 동치)
+
+4. **실제 위쪽 방향 (Camera Up / 로컬 Y축)**:
+   $$\mathbf{cameraUp} = \mathbf{right} \times \mathbf{f} \quad (= \mathbf{z}_c \times \mathbf{right})$$
+   > $\mathbf{up}$ 벡터가 $\mathbf{f}$와 정확히 직교하지 않더라도, 이 외적으로 완벽한 정규 직교 기저가 완성된다.
 
 ### 뷰 행렬 (View Matrix)
 
-$$
-\mathbf{LookAt} = \begin{bmatrix}
+$$\mathbf{LookAt} = \begin{bmatrix}
 \mathbf{right}_x & \mathbf{right}_y & \mathbf{right}_z & -\mathbf{right} \cdot \mathbf{eye} \\
 \mathbf{cameraUp}_x & \mathbf{cameraUp}_y & \mathbf{cameraUp}_z & -\mathbf{cameraUp} \cdot \mathbf{eye} \\
-\mathbf{forward}_x & \mathbf{forward}_y & \mathbf{forward}_z & -\mathbf{forward} \cdot \mathbf{eye} \\
+\mathbf{z}_{c,x} & \mathbf{z}_{c,y} & \mathbf{z}_{c,z} & -\mathbf{z}_c \cdot \mathbf{eye} \\
 0 & 0 & 0 & 1
-\end{bmatrix}
-$$
+\end{bmatrix}$$
 
-> **오른손 좌표계 기준**. 왼손 좌표계(DirectX/Unity)에서는 forward 방향이나 축 계산 순서가 다를 수 있다.
+> **행렬 3행 주의**: 카메라가 $-Z$를 바라보므로 3행에는 시선 반대 벡터인 $\mathbf{z}_c = -\mathbf{f}$가 들어간다.  
+> 왼손 좌표계(DirectX/Unity)에서는 카메라가 $+Z$를 바라보므로 축 외적 순서와 3행 부호가 반대로 바뀐다.
 
 ---
 
@@ -311,12 +312,11 @@ viewMatrix = lookAt(finalPos, target, worldUp)
 
 ## 9. 빠른 참조
 
-| 요소 | 공식/설명 |
-|------|----------|
-| Forward | normalize(eye - target) |
-| Right | normalize(cross(forward, up)) |
-| Up | cross(right, forward) |
-| View 행렬 | [R^T, -R^T × eye; 0, 1] |
+| Forward (시선) | $\mathbf{f} = \text{normalize}(\mathbf{target} - \mathbf{eye})$ |
+| Camera Z (로컬 Z) | $\mathbf{z}_c = -\mathbf{f} = \text{normalize}(\mathbf{eye} - \mathbf{target})$ |
+| Right (로컬 X) | $\text{normalize}(\mathbf{f} \times \mathbf{up})$ |
+| Up (로컬 Y) | $\mathbf{right} \times \mathbf{f}$ |
+| View 행렬 | $[\mathbf{R}^T, -\mathbf{R}^T \cdot \mathbf{eye}; \mathbf{0}, 1]$ |
 | 빌보드 | 뷰 행렬의 right/up 사용 |
 | 짐벌락 방지 | forward ∥ up 체크 |
 | 1인칭 | pitch clamping (±89°) |

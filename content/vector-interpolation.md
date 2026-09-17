@@ -73,9 +73,9 @@ $$
 \text{slerp}(\mathbf{a}, \mathbf{b}, t) = \frac{\sin((1 - t)\theta)}{\sin\theta} \mathbf{a} + \frac{\sin(t\theta)}{\sin\theta} \mathbf{b}
 $$
 
-> $\theta < 0.001$일 경우 각도가 너무 작으므로 $\text{lerp}(\mathbf{a}, \mathbf{b}, t)$로 대체한다.
-
-> **최단 호 처리**: $\mathbf{a} \cdot \mathbf{b} < 0$이면 Slerp이 긴 호(180° 초과)로 회전하므로, $\mathbf{b}$를 뒤집어($-\mathbf{b}$로 대체) 최단 호로 간다. 정반대 방향($\theta = \pi$)은 회전축이 무수히 많아 임의 선택이 필요하다(퇴화 케이스).
+> **수치 안정성**: $\theta < 0.001$($\sin\theta \approx 0$)일 때는 $0$으로 나누기를 방지하기 위해 $\text{lerp}(\mathbf{a}, \mathbf{b}, t)$ 후 정규화(Nlerp)로 대체한다.  
+> **정반대 방향 퇴화 ($\theta \approx \pi$, $\mathbf{a} \cdot \mathbf{b} \approx -1$)**: 두 벡터가 정반대를 가리킬 때는 두 벡터를 잇는 최단 호(대원)의 회전축이 무수히 많아 유일하게 결정되지 않는다. 이때는 $\mathbf{a}$에 수직인 임의의 축을 하나 선택하여 180° 회전해야 한다.  
+> *(참고: $\mathbf{a} \cdot \mathbf{b} < 0$일 때 부호를 반전시켜 최단 경로를 취하는 규칙은 $\mathbf{q} \sim -\mathbf{q}$가 같은 회전을 나타내는 **쿼터니언 Slerp**의 성질이며, 3D 방향 벡터 Slerp에서는 부호를 뒤집으면 반대 방향으로 향하게 되므로 적용하지 않는다.)*
 
 ### 특징
 - **각속도 일정**: 회전 보간에 적합

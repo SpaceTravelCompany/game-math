@@ -109,15 +109,19 @@ function gaussianApprox():
     return sum - 6    // 평균 0, 표준편차 1
 ```
 
-$$z \approx \sum_{i=1}^{12} \text{random}_i - 6 \quad \text{평균 0, 표준편차 1}$$
+$$z \approx \sum_{i=1}^{12} \text{random}_i - 6$$
+
+> 12개의 균등 난수를 더하고 6을 빼면, 중심 극한 정리에 의해 **평균 0, 표준편차 1**의 표준 정규 분포에 매우 가까워진다.
 
 **게임에서의 활용:**
-- **데미지 변동**: 기본 데미지 ± 표준편차
-- **AI 행동**: 같은 상황에서도 약간씩 다른 행동
+- **데미지 변동**: 기본 데미지 $\pm$ 표준편차
+- **AI 행동**: 같은 상황에서도 약간씩 다른 반응
 - **스탯 분포**: 캐릭터 능력치의 자연스러운 분포
 - **자연 현상**: 풀, 돌 등의 크기 분산
 
-$$\text{damage} = \text{baseDamage} \times \text{gaussian}(1.0, 0.1) \quad \text{±10% 변동}$$
+$$\text{damage} = \text{baseDamage} \times \text{gaussian}(1.0,\, 0.1)$$
+
+> 평균 1.0, 표준편차 0.1을 적용하여 약 $\pm 10\%$ 내외의 자연스러운 데미지 변동을 생성한다.
 
 ---
 
@@ -273,7 +277,8 @@ $$r = \text{radius} \times \sqrt{\text{random()}}$$
 
 $$\text{position} = (r \cdot \cos(\text{angle}),\ r \cdot \sin(\text{angle}))$$
 
-> **주의**: $r = \text{random()} \times \text{radius}$는 중심에 밀집하는 편향이 생긴다. $\sqrt{\text{random()}}$을 해야 균등하다.
+> **왜 $\sqrt{}$를 씌우는가?**  
+> 원의 면적은 반지름의 제곱($\pi r^2$)에 비례한다. 따라서 중심 근처보다 바깥쪽 띠의 면적이 훨씬 넓다. 단순히 $r = \text{random()} \times \text{radius}$로 뽑으면 바깥쪽으로 갈수록 점들의 밀도가 희박해져 중심에만 점들이 빽빽하게 뭉친다. 누적 면적 확률 분포의 역함수인 $\sqrt{u}$를 곱해주어야 원 전체에 균일하게 퍼진다.
 
 ---
 

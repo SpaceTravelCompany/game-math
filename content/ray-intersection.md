@@ -96,33 +96,32 @@ $$t_1 = \frac{-b - \sqrt{\Delta}}{2a}, \quad t_2 = \frac{-b + \sqrt{\Delta}}{2a}
 
 $$t = \begin{cases} t_1 & \text{if } t_1 \ge 0 \\ t_2 & \text{if } t_2 \ge 0 \\ \text{no hit} & \text{otherwise} \end{cases}$$
 
-### 기하적 방법 (더 직관적)
+### 기하적 방법 (가장 직관적이고 추천)
 
-광선 원점에서 구 중심까지의 벡터:
+직각삼각형의 피타고라스 정리를 이용해 2차 방정식의 근의 공식 없이 기하학적으로 푼다.
 
-$$\mathbf{L} = \mathbf{C} - \mathbf{O}$$
+```text
+               C (구 중심)
+              /|
+             / | d (중심과 광선 사이 최단거리)
+          L /  |
+           /   |
+          O----+-------P1-------P2-------> D (광선 방향)
+              tc       \-- tl --/
+```
 
-광선에 대한 투영 거리:
+1. **구 중심까지 벡터**: $\mathbf{L} = \mathbf{C} - \mathbf{O}$
+2. **광선 방향으로 투영된 거리**: $t_c = \mathbf{L} \cdot \mathbf{D}$
+   - $t_c < 0$이고 원점이 구 밖이면($\|\mathbf{L}\| > r$): 구가 광선 뒤에 있음 $\to$ **no hit**
+3. **광선과 구 중심 사이의 최단 수직 거리 제곱**: $d^2 = \|\mathbf{L}\|^2 - t_c^2$
+   - $d^2 > r^2$: 광선이 구를 빗나감 $\to$ **no hit**
+4. **구 내부 통과 반폭 ($t_l$)**: $t_l = \sqrt{r^2 - d^2}$
+5. **교차 거리**:
+   - 진입점: $t_1 = t_c - t_l$
+   - 탈출점: $t_2 = t_c + t_l$
 
-$$t_c = \mathbf{L} \cdot \mathbf{D}$$
-
-- $t_c < 0$ **이고 원점이 구 밖이면** ($\|\mathbf{L}\| > r$): 구가 광선 뒤에 있음 → no hit (원점이 구 내부인 경우는 아래 주의 참고)
-
-투영점에서 구 중심까지의 거리:
-
-$$d^2 = \mathbf{L} \cdot \mathbf{L} - t_c^2$$
-
-- $d^2 > r^2$: 광선이 구를 스치지 않음 → no hit
-- $d^2 = r^2$: 접선(tangent) — 한 점에서 스침 ($t_l = 0$, $t_1 = t_2 = t_c$)
-
-교차점까지의 거리:
-
-$$t_l = \sqrt{r^2 - d^2}$$
-
-$$t_1 = t_c - t_l \quad \text{(가까운 교차점)}, \quad t_2 = t_c + t_l \quad \text{(먼 교차점)}$$
-
-> **주의 — 원점이 구 내부인 경우**
-> 광선 원점이 구 내부($\|\mathbf{L}\| < r$)라면 $t_c < 0$이어도 no hit이 아니다. 이때는 항상 $t_1 < 0 < t_2$이므로, 중심이 원점 뒤쪽에 있어도($t_c < 0$) 앞쪽 출구점 $t_2 = t_c + t_l > 0$이 존재해 히트로 잡아야 한다. 해석적 방법의 "가장 가까운 양수 $t$" 분기는 이 경우를 자동으로 처리한다.
+> **원점이 구 내부인 경우 ($\|\mathbf{L}\| < r$)**  
+> 카메라/총구가 구 안에 있으면 $t_1 < 0$이지만, 앞쪽 표면 $t_2 = t_c + t_l > 0$으로 나가게 된다. 따라서 시작점이 구 안이면 $t = t_2$를 첫 교차점으로 취한다.
 
 **게임에서의 활용:**
 - **총알 판정**: 광선이 캐릭터의 바운딩 구를 관통하는지
@@ -139,9 +138,29 @@ AABB(Axis-Aligned Bounding Box)는 축에 정렬된 박스다.
 
 $$\text{AABB} = \{ \mathbf{P} \mid \min_x \le P_x \le \max_x,\; \min_y \le P_y \le \max_y,\; \min_z \le P_z \le \max_z \}$$
 
-### Slab Method
+### Slab Method의 직관
 
-각 축별로 광선이 슬랩(slab, 두 평면 사이 공간)을 통과하는 구간을 구하고, 교집합이 있는지 확인한다.
+AABB는 X, Y, Z 세 쌍의 평행한 평면(슬랩, Slab)이 겹친 교집합이다.  
+광선이 상자를 뚫고 지나가려면 **모든 축의 슬랩 구간이 동시에 겹치는 공통 구간**이 존재해야 한다.
+
+```text
+       Y_max --------------------+-------------------
+                                 |   [AABB 상자]
+       Y_min ---------+----------+-------------------
+                      |          |
+                    X_min      X_max
+
+  광선 ───>  X슬랩 통과구간: [ t_x_enter,       t_x_exit ]
+             Y슬랩 통과구간:       [ t_y_enter,       t_y_exit ]
+  공통 구간 (겹침!):               [ t_min,     t_max ]
+```
+
+- **가장 늦게 들어간 시점**: $t_{\min} = \max(t_{x1}, t_{y1}, t_{z1})$
+- **가장 일찍 빠져나온 시점**: $t_{\max} = \min(t_{x2}, t_{y2}, t_{z2})$
+- **판정 규칙**:
+  - **$t_{\min} \le t_{\max}$**: 세 축 모두에서 겹치는 구간이 있으므로 **명중(Hit)**!
+  - **$t_{\min} > t_{\max}$**: 한 축을 빠져나온 뒤에야 다른 축에 진입함 $\to$ **빗맞음(Miss)**!
+  - **$t_{\max} < 0$**: 상자가 광선 뒤쪽에 있음 $\to$ **no hit**
 
 ```text
 function rayAABB(O, D, min, max):
@@ -150,40 +169,44 @@ function rayAABB(O, D, min, max):
 
     for each axis i in (x, y, z):
         if D[i] == 0:
-            // 광선이 축에 수직 → 원점이 슬랩 안에 있어야 함
+            // 광선이 축과 평행: 원점이 슬랩 범위 안에 있어야만 충돌 가능
             if O[i] < min[i] or O[i] > max[i]:
                 return no hit
         else:
             t1 = (min[i] - O[i]) / D[i]
             t2 = (max[i] - O[i]) / D[i]
 
+            // 광선 진행 방향에 따라 진입/탈출 순서 정렬
             if t1 > t2: swap(t1, t2)
 
             tmin = max(tmin, t1)
             tmax = min(tmax, t2)
 
             if tmin > tmax:
-                return no hit        // 교차 없음
+                return no hit        // 공통 구간 없음 → 빗나감
 
     if tmax < 0:
         return no hit                // 박스가 광선 뒤에 있음
 
+    // 원점이 박스 내부(tmin < 0)라면 박스를 뚫고 나가는 tmax가 첫 교차점
     t = (tmin ≥ 0) ? tmin : tmax
-    return O + t × D
+    return hit(O + t * D, t)
 ```
 
-### 최적화 (조건문 줄이기)
+### 최적화 (분기 제거 버전)
+
+현대 셰이더 및 물리 엔진에서는 `1.0 / D`의 역수를 미리 계산하여 나눗셈을 곱셈으로 바꾸고, IEEE 754 부동소수점의 `+inf`, `-inf` 처리를 활용해 조건문을 없앤다:
 
 ```text
-// 분기 없는 버전 (현대 CPU에서 더 빠름)
+// 분기 없는 최적화 버전 (BVH 순회에 필수)
 invD = 1 / D
-t1 = (min - O) × invD
-t2 = (max - O) × invD
+t1 = (min - O) * invD
+t2 = (max - O) * invD
 
-tmin = max(min(t1.x, t2.x), min(t1.y, t2.y), min(t1.z, t2.z))
-tmax = min(max(t1.x, t2.x), max(t1.y, t2.y), max(t1.z, t2.z))
+tmin = max(max(min(t1.x, t2.x), min(t1.y, t2.y)), min(t1.z, t2.z))
+tmax = min(min(max(t1.x, t2.x), max(t1.y, t2.y)), max(t1.z, t2.z))
 
-hit = tmax ≥ max(tmin, 0)
+hit = (tmax ≥ max(tmin, 0.0))
 ```
 
 **게임에서의 활용:**
@@ -195,9 +218,17 @@ hit = tmax ≥ max(tmin, 0)
 
 ## 5. Ray-Triangle 교차 (Möller–Trumbore)
 
-삼각형은 3D 그래픽스의 기본 단위이므로 광선-삼각형 교차는 가장 중요한 교차 테스트 중 하나다.
+삼각형은 3D 그래픽스의 기본 단위다. Möller–Trumbore 알고리즘은 **평면 방정식을 별도로 구하지 않고**, 광선 식과 삼각형 바리센트릭 보간 식을 한 번에 연립하여 교차 거리 $t$와 내부 좌표 $(u, v)$를 동시에 구하는 업계 표준 알고리즘이다.
 
-### Möller–Trumbore 알고리즘
+### 핵심 아이디어
+
+광선의 점 $\mathbf{O} + t\mathbf{D}$ 와 삼각형 내부의 점 $(1-u-v)\mathbf{V_0} + u\mathbf{V_1} + v\mathbf{V_2}$ 가 같다고 놓으면:
+
+$$\mathbf{O} - \mathbf{V_0} = -t\mathbf{D} + u(\mathbf{V_1} - \mathbf{V_0}) + v(\mathbf{V_2} - \mathbf{V_0})$$
+
+이는 3개의 미지수 $(t, u, v)$에 대한 3원 1차 연립방정식이다. 이를 크라메르 공식(Cramer's Rule)과 스칼라 삼중적으로 풀면 외적과 내적 몇 번만으로 풀린다.
+
+### Möller–Trumbore 알고리즘 코드
 
 ```text
 function rayTriangle(O, D, V0, V1, V2):
@@ -207,45 +238,44 @@ function rayTriangle(O, D, V0, V1, V2):
     h = cross(D, edge2)
     a = dot(edge1, h)
 
+    // a가 0에 가까우면 광선이 삼각형 평면과 평행
     if a > -ε and a < ε:
-        return no hit            // 광선이 삼각형에 평행
+        return no hit
 
-    f = 1 / a
+    f = 1.0 / a
     s = O - V0
-    u = f × dot(s, h)
+    u = f * dot(s, h)
 
-    if u < 0 or u > 1:
-        return no hit            // 삼각형 바깥
+    // 바리센트릭 u가 [0, 1] 범위를 벗어나면 삼각형 바깥
+    if u < 0.0 or u > 1.0:
+        return no hit
 
     q = cross(s, edge1)
-    v = f × dot(D, q)
+    v = f * dot(D, q)
 
-    if v < 0 or u + v > 1:
-        return no hit            // 삼각형 바깥
+    // u + v > 1 이면 삼각형 빗변 바깥
+    if v < 0.0 or (u + v) > 1.0:
+        return no hit
 
-    t = f × dot(edge2, q)
+    t = f * dot(edge2, q)
 
     if t > ε:
-        return hit(O + t × D, t, u, v)    // u, v: 속성 보간/픽싱용
+        return hit(O + t * D, t, u, v)  // u, v로 텍스처 UV 및 법선 보간 가능!
     else:
-        return no hit            // 교차점이 광선 뒤
+        return no hit                    // 교차점이 광선 뒤에 있음
 ```
 
-### u, v의 의미
+### u, v의 의미와 정밀 법선 보간
 
-삼각형 내부를 $(u, v)$ 매개변수로 표현:
+교차점의 내부 좌표는 바리센트릭 가중치가 된다:
 
-$$\mathbf{P} = (1-u-v)\mathbf{V_0} + u\mathbf{V_1} + v\mathbf{V_2}$$
+$$\mathbf{P} = (1 - u - v)\mathbf{V_0} + u\mathbf{V_1} + v\mathbf{V_2}$$
 
-$u \ge 0,\; v \ge 0,\; u+v \le 1$이면 삼각형 내부.
-
-### 법선 계산
-
-교차점의 법선은 꼭지점 법선의 무게 중심 가중치로 보간한다:
+따라서 정점 법선($\mathbf{N_0}, \mathbf{N_1}, \mathbf{N_2}$)이나 텍스처 UV도 동일한 비율로 즉시 부드럽게 보간할 수 있다:
 
 $$w = 1 - u - v$$
 
-$$\mathbf{n}_{\text{hit}} = w \, \mathbf{N_0} + u \, \mathbf{N_1} + v \, \mathbf{N_2}$$
+$$\mathbf{n}_{\text{hit}} = \text{normalize}(w\,\mathbf{N_0} + u\,\mathbf{N_1} + v\,\mathbf{N_2})$$
 
 $\mathbf{N_0}, \mathbf{N_1}, \mathbf{N_2}$는 각 꼭지점의 법선.
 

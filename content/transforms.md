@@ -59,14 +59,35 @@ s_x & 0 & 0 & 0 \\
 \end{bmatrix}
 $$
 
-### 비균일 스케일의 문제
+### 비균일 스케일과 법선 왜곡 (Normal Matrix)
+
+물체를 한쪽 축으로만 늘리면(비균일 스케일, $s_x \neq s_y \neq s_z$), 표면의 접선 벡터는 늘어나지만 **원래 법선 벡터에 $M$을 그대로 곱하면 표면과 더 이상 수직을 이루지 못하고 왜곡**된다.
 
 ```text
-// 비균일 스케일 (sx ≠ sy ≠ sz)은 법선을 왜곡한다
-// 법선에는 (M⁻¹)^T를 사용해야 함
-normalMatrix = transpose(inverse(modelMatrix))
-correctNormal = normalMatrix × normal
+  [원래 상태: 수직 유지]      [가로로 2배 늘렸을 때 M을 곱하면?]
+         n                           n' (수직이 깨짐!)
+         ↑                           ↗
+  ───────┴───────             ───────────/───────────
+         t                               t'
 ```
+
+**왜 $(M^{-1})^T$ (Inverse Transpose)를 곱해야 하는가? (직관)**  
+변환 후에도 법선 $\mathbf{n}'$과 접선 $\mathbf{t}' = M\mathbf{t}$는 항상 수직(내적 = 0)이어야 한다:
+
+$$\mathbf{n}' \cdot \mathbf{t}' = (\mathbf{n}')^T (M\mathbf{t}) = ((\mathbf{n}')^T M) \mathbf{t} = \mathbf{n}^T \mathbf{t} = 0$$
+
+따라서 $(\mathbf{n}')^T M = \mathbf{n}^T$ 가 되어야 하므로, 양변에 $M^{-1}$을 곱하고 전치하면:
+
+$$\mathbf{n}' = (M^{-1})^T \mathbf{n}$$
+
+```text
+// 셰이더로 넘겨줄 법선 변환 행렬 (Normal Matrix)
+// 3x3 부분의 역전치 행렬을 사용
+mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));
+vec3 worldNormal = normalize(normalMatrix * localNormal);
+```
+
+> **균일 스케일일 때**: $s_x = s_y = s_z$이거나 회전만 있는 경우 $(M^{-1})^T$는 원래 회전 행렬과 방향이 같으므로 일반 모델 행렬의 $3\times3$ 부분만 곱해도 충분하다.
 
 **게임에서의 활용:**
 - **객체 크기**: 캐릭터, 환경 에셋 크기 조정

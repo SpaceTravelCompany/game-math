@@ -145,14 +145,27 @@ $$
 
 $$R^{-1} = R^T \quad \text{(순수 회전 행렬의 역행렬 = 전치 행렬)}$$
 
-$$T(d_x, d_y, d_z)^{-1} = T(-d_x, -d_y, -d_z) \quad \text{(순수 이동 행렬의 역행렬 = 이동 부호 반전)}$$
+$$T(\mathbf{t})^{-1} = T(-\mathbf{t}) \quad \text{(순수 이동 행렬의 역행렬 = 이동 부호 반전)}$$
+
+### 강체 변환 (이동 + 회전)의 고속 역행렬
+
+스케일이 없고 이동과 회전만 있는 행렬($M = T \times R$, 예: 카메라 월드 행렬, 강체 오브젝트)은 일반 4×4 역행렬을 계산할 필요 없이 다음과 같이 즉시 구해진다:
 
 $$
-M = T \times R \times S
+\begin{bmatrix}
+\mathbf{R} & \mathbf{t} \\
+\mathbf{0}^T & 1
+\end{bmatrix}^{-1}
+=
+\begin{bmatrix}
+\mathbf{R}^T & -\mathbf{R}^T \mathbf{t} \\
+\mathbf{0}^T & 1
+\end{bmatrix}
 $$
-$$
-M^{-1} = S^{-1} \times R^{-1} \times T^{-1} = S^{-1} \times R^T \times T^{-1}
-$$
+
+> 카메라 월드 변환을 뒤집어 뷰 행렬(View Matrix)을 만들 때 바로 이 공식을 사용한다 (LookAt의 이동부가 $-\mathbf{R}^T \cdot \mathbf{eye}$가 되는 이유다).
+
+$$M = T \times R \times S \quad \Longrightarrow \quad M^{-1} = S^{-1} \times R^T \times T^{-1}$$
 
 **게임에서의 활용:**
 - **월드 → 로컬 변환**: 부모 공간으로 변환 되돌리기

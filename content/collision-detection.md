@@ -138,78 +138,110 @@ SAT(Separating Axis Theorem)를 사용한다. (다음 섹션 참조)
 
 ---
 
-## 5. SAT (Separating Axis Theorem)
+---
 
-두 컨벡스(convex) 형태가 분리될 수 있는 축이 하나라도 있으면 충돌하지 않는다는 정리다.
+## 5. SAT (Separating Axis Theorem, 분리축 정리)
 
-### 원리
+두 볼록(convex) 다포체 사이에 **"둘을 가르는 직선(또는 평면)"이 단 하나라도 존재하면 두 물체는 충돌하지 않는다**는 정리다.
 
-모든 후보 축에 대해 두 객체의 투영이 겹치는지 검사. 하나라도 분리되면 충돌 없음.
+### 손전등과 그림자 직관
+
+두 물체 사이에 여러 각도로 손전등을 비춘다고 상상해보자:
+
+```text
+       물체 A         물체 B
+       ┌───┐          ▲
+       └───┘         / \
+                    └───┘
+  ─────────────────────────────────── (축에 투영)
+       [---]          [---]   <-- 그림자가 서로 떨어져 있음! (분리축 발견 → 충돌 아님)
+```
+
+- 특정 각도로 비췄을 때 바닥에 맺힌 **두 그림자가 서로 떨어져 있다면(overlap = 0)**, 두 물체 사이에는 빈 틈이 있는 것이므로 **절대 충돌하지 않는다**.
+- 반대로 **가능한 모든 각도에서 그림자가 전부 겹칠 때만** 비로소 두 물체가 진짜로 충돌한 것이다.
+
+### 검사해야 할 후보 축
+
+무한한 각도를 다 검사할 필요 없이, 기하학적으로 의미 있는 축만 검사하면 된다:
+
+1. **AABB vs AABB**: 3개 축만 검사 (X, Y, Z축)
+2. **OBB vs OBB**: 총 **15개 축**을 검사
+   - 물체 A의 로컬 3축 (A의 면에 수직인 축)
+   - 물체 B의 로컬 3축 (B의 면에 수직인 축)
+   - A의 모서리와 B의 모서리의 외적 $3 \times 3 = 9$개 축 (모서리끼리 부딪히는 모서리-모서리 접촉 판정용)
 
 ```text
 for axis in candidateAxes:
-    projA = project(A, axis)
-    projB = project(B, axis)
-    if not overlap(projA, projB):
-        return no hit        // 분리 축 발견!
+    projA = project(A, axis) // [minA, maxA]
+    projB = project(B, axis) // [minB, maxB]
 
-return hit        // 모든 축에서 겹침 → 충돌
+    // 하나라도 그림자가 떨어져 있으면 즉시 조기 종료!
+    if not overlap(projA, projB):
+        return no hit
+
+// 15개 축 모두에서 그림자가 겹침 → 충돌!
+return hit
 ```
 
-### AABB vs AABB 후보 축
-
-$$\text{axes} = \{(1,0,0),\; (0,1,0),\; (0,0,1)\} \quad \text{(3개 축만 검사)}$$
-
-### OBB vs OBB 후보 축
-
-각 OBB의 3개 축 × 2 + 크로스 프로덕트 9개 = 15개 축:
-
-$$\text{axes} = \{ \mathbf{A}_r, \mathbf{A}_u, \mathbf{A}_f, \mathbf{B}_r, \mathbf{B}_u, \mathbf{B}_f \}$$
-
-$$\cup \; \{ \mathbf{A}_i \times \mathbf{B}_j \mid i \in \{r, u, f\},\; j \in \{r, u, f\} \}$$
-
-> **주의 — 크로스 축 평행 퇴화**
-> 두 축쌍이 (거의) 평행하면 $\mathbf{A}_i \times \mathbf{B}_j \approx \mathbf{0}$이 되어 투영 길이가 0인 무의미한 축이 된다. 길이가 $\varepsilon$ 미만인 크로스 축은 평행 퇴화로 간주해 스킵한다 (Ericson, *Real-Time Collision Detection* §4.4).
+> **크로스 축 평행 퇴화 주의**  
+> A의 모서리와 B의 모서리가 거의 평행하면 $\mathbf{A}_i \times \mathbf{B}_j \approx \mathbf{0}$이 되어 축의 길이가 0이 된다. 이 축은 무의미하므로 외적 벡터 길이가 $\varepsilon$ 미만이면 검사에서 제외한다.
 
 ### 최소 관통 축 (MTV — Minimum Translation Vector)
 
-$$\text{overlap} = \min(\text{projA}_{\max}, \text{projB}_{\max}) - \max(\text{projA}_{\min}, \text{projB}_{\min})$$
-
-- $\text{overlap} \le 0$: 분리 축 → no hit
-- 최소 overlap인 축이 MTV:
+모든 축 중에서 **그림자가 가장 적게 겹친 축**이 바로 두 물체를 떼어놓기 위해 가장 적은 힘으로 밀어낼 수 있는 최단 탈출 경로(MTV)다:
 
 $$\text{MTV} = \mathbf{n}_{\min} \cdot \text{minOverlap}$$
 
-이만큼 밀어내면 충돌 해결.
-
 ---
 
-## 6. GJK (Gilbert–Johnson–Keerthi)
+## 6. GJK (Gilbert–Johnson–Keerthi) 알고리즘
 
-임의의 컨벡스 형태 사이의 충돌을 반복적으로(점진적으로) 검사하는 알고리즘이다. 충돌 확인 또는 탐색 방향으로 더 이상 원점에 접근할 수 없음을 판정하면 유한 번의 반복 후 종료한다.
-
-> **Minkowski 차이의 직관**: 두 물체 $A$, $B$가 겹치는지 직접 따지려면 모든 점 쌍을
-> 검사해야 하므로 어렵다. 대신 $B$를 원점을 중심으로 뒤집어($-B$) $A$에 더한 집합
-> $M = A - B$를 만든다. 그러면 **"$A$와 $B$가 겹치는가?"**라는 문제가
-> **"원점 $(0,0,0)$이 $M$ 안에 있는가?"**로 단순해진다 — 점 집합 간 연산이
-> 점-집합 포함 관계 하나로 축소된 것이다.
->
-> 1차원 예: $A = [2, 5]$, $B = [3, 6]$일 때
-> $M = A - B = [2-6,\; 5-3] = [-4, 2]$, 원점 $0 \in M$이므로 충돌.
-> 반면 $A = [2, 4]$, $B = [5, 7]$이면 $M = [-5, -1]$, 원점 밖 → 충돌 아님.
+SAT는 다면체의 면/모서리가 많아지면 검사해야 할 축의 수가 급증한다.  
+**GJK**는 구, 캡슐, 원기둥, 임의의 볼록 다면체 등 **어떤 형태의 볼록체든 지원하는 현대 3D 물리 엔진(Bullet, PhysX)의 핵심 알고리즘**이다.
 
 ### 핵심 아이디어: 민코프스키 차이 (Minkowski Difference)
 
-$$\mathbf{M} = A \ominus B = \{ \mathbf{a} - \mathbf{b} \mid \mathbf{a} \in A,\; \mathbf{b} \in B \}$$
+두 물체 $A$와 $B$가 겹친다는 것은, $A$ 안의 점 $\mathbf{a}$와 $B$ 안의 점 $\mathbf{b}$가 같아지는 점($\mathbf{a} = \mathbf{b}$)이 존재한다는 뜻이다.  
+즉, $\mathbf{a} - \mathbf{b} = \mathbf{0}$ 이다!
 
-$M$이 원점을 포함하면 충돌! → 원점이 $M$ 안에 있는지 검사.
+$$A \ominus B = \{ \mathbf{a} - \mathbf{b} \mid \mathbf{a} \in A,\; \mathbf{b} \in B \}$$
 
-### 심플렉스(Simplex) 구축
+> **"두 물체 $A, B$가 충돌하는가?"**  
+> $\iff$ **"민코프스키 차이 도형 $A \ominus B$가 원점 $(0,0,0)$을 포함하는가?"**
 
-GJK는 원점이 $M$ 안에 있는지 확인하기 위해
-점 → 선분 → 삼각형 → 사면체 순으로 점점 더 정밀한 심플렉스를 만들어가며
-원점을 감싸는지 검사한다. 한 번에 사면체를 만들 수 없으니
-**가장 유망한 점부터 하나씩 추가하며 점진적으로 좁혀가는** 방식이다.
+```text
+    물체 A 와 B의 충돌 판정                민코프스키 차이 공간 (A - B)
+       ┌───┐                                      ┌──────┐
+       │ A ├───┐                                  │      │
+       └───┤ B │   ======(변환)=======>           │  (0,0)  <-- 원점이 도형 안!
+           └───┘                                  │      │    (즉, 충돌!)
+                                                  └──────┘
+```
+
+복잡한 두 물체의 상호작용이 **"도형 하나가 원점을 품고 있는가?"**라는 초간단 포함 문제로 바뀐다!
+
+### Support 함수: 외곽 끝점만 빠르게 구하기
+
+민코프스키 차이 도형 전체를 컴퓨터 메모리에 다 만들 필요가 없다.  
+주어진 방향 $\mathbf{d}$로 가장 멀리 뻗은 끝점 하나만 구하면 된다:
+
+$$\text{support}(A \ominus B, \mathbf{d}) = \text{furthestPoint}(A, \mathbf{d}) - \text{furthestPoint}(B, -\mathbf{d})$$
+
+$A$에서 $\mathbf{d}$ 방향 맨 끝 점을 찾고, $B$에서 반대 방향 $-\mathbf{d}$ 맨 끝 점을 찾아 빼면 끝이다.
+
+### 심플렉스(Simplex)로 원점 포위하기
+
+GJK는 민코프스키 차이 도형 안에서 **가장 단순한 기하 단위(심플렉스)**를 점진적으로 만들어 원점을 포위한다:
+- **1개 점** (점) $\to$ **2개 점** (선분) $\to$ **3개 점** (삼각형) $\to$ **4개 점** (사면체)
+
+```text
+1. 임의의 방향 d로 첫 번째 점을 찾는다.
+2. 원점 방향 (-점)으로 두 번째 점을 찾아 선분을 만든다.
+3. 선분에서 원점을 향하는 법선 방향으로 세 번째 점을 찾아 삼각형을 만든다.
+4. 삼각형에서 원점을 향해 네 번째 점을 찾아 사면체를 만든다.
+5. 사면체가 원점 (0,0,0)을 완전히 둘러싸면 → "충돌(Hit)!"
+6. 둘러싸지 못하고 더 이상 원점 쪽으로 나아갈 점이 없으면 → "충돌 아님(No Hit)!"
+```
 
 ```text
 function GJK(A, B):
@@ -261,108 +293,63 @@ function support(A, B, direction):
 
 ## 7. EPA (Expanding Polytope Algorithm)
 
-GJK로 충돌을 확인한 후, 관통 깊이와 법선을 구하는 알고리즘이다.
+GJK는 "충돌했는가?"(참/거짓)만 판정하고 끝난다.  
+충돌이 확인되었을 때, **두 물체가 얼마나 파고들었는지(관통 깊이)와 어느 방향으로 밀어내야 하는지(충돌 법선)**를 구하는 알고리즘이 **EPA**다.
 
-> **EPA의 직관**: GJK가 충돌만 알려줬다면, EPA는 그 심플렉스에서 시작해
-> 다면체를 바깥(면 법선 방향)으로 확장하며 원점에 가장 가까운 면을 갱신한다.
-> 이 면의 법선이 충돌 법선, 원점까지의 거리가 관통 깊이(penetration depth)가 된다.
-> 관통 깊이는 두 물체를 분리하기 위해 밀어내야 할 최소 거리다.
-
-### 원리
-
-GJK의 마지막 심플렉스(사면체)를 초기 다면체로 시작. 다면체를 바깥으로 확장하면서 원점에 가장 가까운 면을 갱신해 나감.
+### 작동 원리 (심플렉스 부풀리기)
 
 ```text
-function EPA(simplex, A, B):
-    while true:
-        // 가장 가까운 면 찾기
-        face = closestFaceToOrigin(simplex)
-        normal = face.normal
-        distance = face.distance
-
-        // 새 점 추가
-        point = support(A, B, normal)
-        d = dot(point, normal)
-
-        if d - distance < ε:
-            // 수렴 → 충돌 법선과 깊이
-            return hit(normal, distance)
-
-        // 면에 새 점 추가하여 심플렉스 확장
-        simplex.expand(point)
+       민코프스키 차이 도형
+          ┌─────────────┐
+          │  . (0,0)    │   <-- 원점을 품은 GJK 사면체에서 시작
+          │   /\        │
+          │  /__\       │   <-- 가장 가까운 면 쪽으로 새 점을 찾아 다면체를 확장
+          └─────────────┘
 ```
+
+1. GJK가 종료할 때 만든 사면체(심플렉스)를 초기 다면체로 삼는다.
+2. 다면체의 모든 면 중에서 **원점 $(0,0,0)$과 가장 가까운 면**을 찾는다.
+3. 그 면의 바깥 법선 방향으로 새 Support 점을 구한다.
+4. 새로 구한 점이 기존 면보다 더 멀리 나아가지 않는다면($\approx$ 도형의 진짜 외곽 표면에 도달함), **그 면의 법선이 충돌 법선 $\mathbf{n}$, 원점까지의 거리가 관통 깊이 $d$** 가 된다!
 
 ---
 
 ## 8. 캡슐 충돌 (Capsule)
 
-캐릭터 충돌에 가장 많이 쓰이는 형태다.
+인간형 캐릭터에 가장 널리 쓰이는 충돌체다. 양 끝에 반구가 달린 원기둥 모양이다.
 
-### 정의
-
-$$\text{Capsule} = \{ \text{segment}: (\mathbf{A}, \mathbf{B}),\; \text{radius}: r \}$$
-
-양끝이 구로 캡핑된 원기둥.
-
-### Capsule vs Sphere
-
-구의 중심에서 세그먼트까지의 최단 거리:
-
-$$\mathbf{d} = \mathbf{C}_{\text{sphere}} - \text{closestPoint}(\mathbf{C}_{\text{sphere}}, \mathbf{A}, \mathbf{B})$$
-
-$$\text{distSq} = \mathbf{d} \cdot \mathbf{d}$$
-
-$$\text{distSq} < (r_{\text{sphere}} + r_{\text{capsule}})^2 \quad \Rightarrow \quad \text{hit}$$
-
-충돌 시:
-
-$$\text{dist} = \sqrt{\text{distSq}}, \quad \mathbf{n} = \frac{\mathbf{d}}{\text{dist}}, \quad \text{depth} = (r_{\text{sphere}} + r_{\text{capsule}}) - \text{dist}$$
-
-### Capsule vs Capsule
-
-두 세그먼트 사이의 최단 거리:
-
-$$\text{dist} = \text{segmentToSegmentDistance}(\text{seg}_A, \text{seg}_B)$$
-
-$$\text{dist} < (r_A + r_B) \quad \Rightarrow \quad \text{hit}$$
-
-> **실전 팁**: 인간형 캐릭터는 캡슐(키 ~ 1.8m, 반지름 ~ 0.3m)로 표현하는 것이 가장 자연스럽다. AABB는 회전 시 어색하고, 구는 키가 안 맞는다.
+### 장점
+- 세그먼트(선분) 하나와 반지름 $r$로 정의된다.
+- **Capsule vs Sphere**: 구 중심에서 선분까지의 최단거리를 구한 뒤, $(r_{\text{sphere}} + r_{\text{capsule}})$과 비교하면 끝!
+- **Capsule vs Capsule**: 두 선분 사이의 최단거리를 구한 뒤, 두 반지름의 합과 비교하면 끝!
 
 ---
 
-## 9. 충돌 응답 (Collision Response)
+## 9. 충돌 응답 (Collision Response 기초)
 
-충돌을 감지한 후 물리적으로 반응한다.
-
-> **범위**: 이 문서는 충돌 **검출**이 주제이며, 이 섹션은 응답의 기초만 요약한다. 물리 응답(임펄스 · 마찰 · slop)의 상세는 《충돌처리》를 참고하라.
+충돌을 검출한 뒤, 두 물체를 분리하고 물리적으로 반응시키는 단계다 (상세 내용은 《충돌처리》 문서 참고).
 
 ### 위치 보정 (Positional Correction)
 
-관통 해결: MTV 방향으로 밀어냄.
+겹쳐진 깊이($d$)만큼 두 물체를 질량의 역수에 비례하여 밀어낸다:
 
-$$\text{totalInvMass} = \frac{1}{m_A} + \frac{1}{m_B}$$
+$$\text{moveRatio}_A = \frac{1/m_A}{1/m_A + 1/m_B}, \qquad \text{moveRatio}_B = \frac{1/m_B}{1/m_A + 1/m_B}$$
 
-질량에 비례하여 분배:
+$$\Delta \mathbf{P}_A = -\mathbf{n} \cdot (d \times 0.8) \cdot \text{moveRatio}_A$$
 
-$$\text{correction} = \mathbf{n}_{\text{mtv}} \cdot \frac{\text{depth}}{\text{totalInvMass}} \cdot 0.8$$
+$$\Delta \mathbf{P}_B = +\mathbf{n} \cdot (d \times 0.8) \cdot \text{moveRatio}_B$$
 
-$$\mathbf{A}_{\text{pos}} \mathrel{-}= \text{correction} \cdot \frac{1}{m_A}$$
-
-$$\mathbf{B}_{\text{pos}} \mathrel{+}= \text{correction} \cdot \frac{1}{m_B}$$
+- 무거운 물체($m$이 큼 $\to 1/m$이 작음)는 조금만 밀리고, 가벼운 물체는 많이 밀린다.
+- 정적 벽/바닥($m = \infty \to 1/m = 0$)은 전혀 밀리지 않는다.
 
 ### 속도 반사 (Velocity Reflection)
 
-속도를 법선 방향으로 분해 (단위 법선 $\hat{\mathbf n}$):
+표면 바깥쪽 법선 $\hat{\mathbf{n}}$에 대해 입사 속도 $\mathbf{v}$를 반사한다 (반발 계수 $e$):
 
-$$\mathbf{v}_n = (\mathbf{v} \cdot \hat{\mathbf{n}}) \, \hat{\mathbf{n}} \quad \text{(법선 성분)}$$
+$$\mathbf{v}_{\text{new}} = \mathbf{v} - (1 + e)(\mathbf{v} \cdot \hat{\mathbf{n}})\hat{\mathbf{n}}$$
 
-$$\mathbf{v}_t = \mathbf{v} - \mathbf{v}_n \quad \text{(접선 성분)}$$
-
-반사 (반발 계수 $e$):
-
-$$\mathbf{v}_{\text{new}} = \mathbf{v}_t - e\,\mathbf{v}_n = \mathbf{v} - (1+e)(\mathbf{v} \cdot \hat{\mathbf{n}})\,\hat{\mathbf{n}}$$
-
-($e = 0$: 비탄성, $e = 1$: 완전 탄성)
+- $e = 0$: 완전 비탄성 (벽에 찰떡처럼 달라붙음)
+- $e = 1$: 완전 탄성 (에너지 손실 없이 그대로 튕겨나감)
 
 ### 접촉점 (Contact Point)
 

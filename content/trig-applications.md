@@ -300,15 +300,22 @@ angle = lerp(350°, 10°, t)  // → 340도 회전 (실제로는 20도여야 함
 
 올바른 방법: 최단 각도 차이를 구한다.
 
-라디안 기준:
+$$\text{diff} = ((b - a + \pi) \bmod 2\pi) - \pi \quad \text{(라디안)}$$
 
-$$\text{diff} = ((b - a + \pi) \bmod 2\pi) - \pi$$
-
-도(degree) 단위라면 $2\pi \to 360$, $\pi \to 180$으로 바꾼다:
-
-$$\text{diff} = ((b - a + 180) \bmod 360) - 180$$
+$$\text{diff} = ((b - a + 180) \bmod 360) - 180 \quad \text{(도)}$$
 
 $$\text{result} = a + \text{diff} \times t$$
+
+> **프로그래밍 언어 주의 (음수 나머지)**  
+> C/C++, C#, JavaScript 등의 `%` 연산자는 음수에 대해 음수를 반환하므로 위 공식을 그대로 `(x % 360)`으로 쓰면 음수 각도에서 버그가 발생한다. 다음과 같이 안전하게 양수 modulo를 취해야 한다:
+
+```text
+function lerpAngle(a, b, t):
+    // 최단 각도 차이 계산 [-180, 180]
+    diff = (b - a) % 360
+    diff = (diff + 540) % 360 - 180  // 음수 보정 포함 한 줄 처리
+    return a + diff * t
+```
 
 ### Slerp 적용 (3D)
 

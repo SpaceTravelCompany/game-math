@@ -258,15 +258,21 @@ controlPoints = [
 
 // Catmull-Rom 스플라인으로 부드러운 경로
 function getCameraPosition(t):
-    // t를 세그먼트 인덱스와 로컬 t로 분할
-    // N = len(controlPoints) (제어점 개수; 세그먼트 수 = N - 3)
-    segIndex = floor(t × (N-3))
-    localT = t × (N-3) - segIndex
+    // t: 전체 경로 진행도 [0, 1]
+    // N개 제어점이 있을 때 유효 곡선 세그먼트 수는 N - 3개
+    numSegments = len(controlPoints) - 3
+    t = clamp(t, 0.0, 1.0)
 
-    P0 = controlPoints[segIndex - 1]
-    P1 = controlPoints[segIndex]
-    P2 = controlPoints[segIndex + 1]
-    P3 = controlPoints[segIndex + 2]
+    // 마지막 t = 1.0 처리
+    tScaled = t * numSegments
+    segIndex = min(floor(tScaled), numSegments - 1)
+    localT = tScaled - segIndex
+
+    // 4개 제어점: 곡선은 P1 -> P2 구간을 지난다
+    P0 = controlPoints[segIndex]
+    P1 = controlPoints[segIndex + 1]
+    P2 = controlPoints[segIndex + 2]
+    P3 = controlPoints[segIndex + 3]
 
     return catmullRom(P0, P1, P2, P3, localT)
 ```

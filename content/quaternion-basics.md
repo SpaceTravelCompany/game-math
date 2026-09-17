@@ -107,20 +107,24 @@ $$q_y = w_1 \cdot y_2 - x_1 \cdot z_2 + y_1 \cdot w_2 + z_1 \cdot x_2$$
 
 $$q_z = w_1 \cdot z_2 + x_1 \cdot y_2 - y_1 \cdot x_2 + z_1 \cdot w_2$$
 
-### 회전 합성
+### 회전 합성 (Multiplication Order)
 
-$$\text{combined} = \mathbf{q}_2 \times \mathbf{q}_1 \quad (\mathbf{q}_1 \text{ 회전 후 } \mathbf{q}_2 \text{ 회전})$$
+행렬과 마찬가지로 쿼터니언 곱셈은 교환법칙이 성립하지 않는다 ($\mathbf{q}_1 \times \mathbf{q}_2 \neq \mathbf{q}_2 \times \mathbf{q}_1$). 회전 기준 축에 따라 곱하는 위치가 달라진다:
 
-이 규칙은 **외인적(extrinsic, 고정 월드 축)** 해석이다. 외인적(월드 축 고정)은 곱하는 순서가 적용 순서와 같고, 내인적(intrinsic, 로컬 축)은 반대다.
+- **월드 고정 축 기준 (Extrinsic)**: 나중에 적용할 회전을 **왼쪽**에 곱한다.
+  $$\mathbf{q}_{\text{combined}} = \mathbf{q}_{\text{later}} \times \mathbf{q}_{\text{first}}$$
+  > 벡터에 적용할 때 $\mathbf{q}_2 (\mathbf{q}_1 \mathbf{v} \mathbf{q}_1^*) \mathbf{q}_2^* = (\mathbf{q}_2 \mathbf{q}_1) \mathbf{v} (\mathbf{q}_2 \mathbf{q}_1)^*$ 이 되므로, 먼저 일어난 $\mathbf{q}_1$이 오른쪽에 놓인다.
 
-> **주의**: 행렬과 마찬가지로 순서가 중요하다! $\mathbf{q}_1 \times \mathbf{q}_2 \neq \mathbf{q}_2 \times \mathbf{q}_1$
+- **객체 로컬 축 기준 (Intrinsic)**: 나중에 적용할 회전을 **오른쪽**에 곱한다.
+  $$\mathbf{q}_{\text{combined}} = \mathbf{q}_{\text{first}} \times \mathbf{q}_{\text{later}}$$
+  > 비행기나 캐릭터가 자기 자신을 기준으로 Roll $\to$ Pitch $\to$ Yaw 회전할 때 사용한다.
 
-**게임에서의 활용:**
+**게임에서의 활용 (월드 축 기준 합성 예시):**
 ```text
-// 월드 축(고정) 기준으로 pitch(Y) → yaw(Z) 순서로 회전 합성
+// 월드 축(고정) 기준으로 pitch(Y) 먼저 적용 후 yaw(Z) 나중에 적용
 q_pitch = fromAxisAngle((0,1,0), 30°)    // pitch = Y축
-q_yaw = fromAxisAngle((0,0,1), 90°)      // yaw = Z축
-final = q_yaw × q_pitch    // pitch(Y) 먼저 적용, yaw(Z) 나중 — extrinsic
+q_yaw   = fromAxisAngle((0,0,1), 90°)    // yaw = Z축
+final = q_yaw × q_pitch                  // 나중 회전(q_yaw)을 왼쪽에 곱함
 ```
 
 ---

@@ -69,20 +69,27 @@ void updateMovement(float dt) {
 
 ## 2. 점프 (Jumping)
 
-### 기본 점프
+### 실무 필수: 원하는 높이와 시간으로 중력·점프속도 역산하기
 
-중력과 초기 점프 속도로 점프 포물선을 만든다:
+플랫포머 게임을 개발할 때 중력과 점프속도를 임의의 숫자로 때려 맞추면 조작감이 망가진다.  
+기획에서 원하는 **최대 점프 높이($h$, 픽셀)**와 **정점까지 걸리는 시간($t_{\text{apex}}$, 초)** 두 가지만 정하면, 물리 공식으로 완벽한 중력과 초기속도가 자동으로 나온다:
 
-$$\text{gravity} = 2000\ \text{px/s}^2$$
-
-$$\text{jumpVelocity} = -\sqrt{2 \cdot \text{gravity} \cdot \text{jumpHeight}}$$
+$$g = \frac{2h}{t_{\text{apex}}^2}, \qquad v_0 = -\frac{2h}{t_{\text{apex}}} = -g \cdot t_{\text{apex}}$$
 
 ```text
-// 점프
+// 예: 높이 120px, 정점 도달 0.35초로 튜닝하고 싶을 때
+float jumpHeight = 120.0f;
+float timeToApex = 0.35f;
+
+float gravity = (2.0f * jumpHeight) / (timeToApex * timeToApex); // ~1959 px/s²
+float jumpVelocity = -gravity * timeToApex;                      // ~ -685 px/s
+
+// 점프 실행
 if (isGrounded && jumpPressed) {
-    velocity.y = -sqrt(2.0f * gravity * jumpHeight);
+    velocity.y = jumpVelocity;
     isGrounded = false;
 }
+```
 
 // 중력 적용 (매 프레임)
 velocity.y += gravity * dt;

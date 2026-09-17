@@ -195,15 +195,13 @@ vy_B -= jt * b.invMass * ty;   // 정적 물체(invMass=0)면 자동으로 미�
 
 임펄스만으로는 관통이 완전히 해소되지 않을 수 있다. 수치 적분의 불완전성 때문에 객체가 서로 파묻히는 현상이 발생하므로, **위치 보정**으로 강제로 밀어낸다.
 
-### 위치 보정 (Projection, 일명 Baumgarte)
+$$\text{effectiveDepth} = \max(d - \text{slop},\, 0)$$
 
-$$\text{factor} = 0.2 \sim 0.8$$
+$$\Delta p_{\text{scalar}} = \frac{\text{effectiveDepth}}{1/m_A + 1/m_B} \cdot \text{factor} \quad (\text{factor} \approx 0.2 \sim 0.8)$$
 
-$$\text{correction} = \mathbf{n} \cdot d \cdot \text{factor}$$
+$$\mathbf{p}_A' = \mathbf{p}_A + (\Delta p_{\text{scalar}} \cdot \text{invMass}_A)\,\mathbf{n}$$
 
-$$\mathbf{p}_A' = \mathbf{p}_A + \frac{\text{correction}}{1/m_A + 1/m_B} \cdot \frac{1}{m_A}$$
-
-$$\mathbf{p}_B' = \mathbf{p}_B - \frac{\text{correction}}{1/m_A + 1/m_B} \cdot \frac{1}{m_B}$$
+$$\mathbf{p}_B' = \mathbf{p}_B - (\Delta p_{\text{scalar}} \cdot \text{invMass}_B)\,\mathbf{n}$$
 
 ```text
 // 위치 보정 (Baumgarte) — invMass = 1/mass, 정적 물체는 invMass = 0 (§3 코드와 동일한 스타일)

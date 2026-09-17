@@ -183,14 +183,19 @@ ratio = far / near      // 이 값이 클수록 z-파이팅 심함
 
 ```text
 // 투영 × 뷰 행렬 = VP 행렬
-// VP 행렬의 6개 행/열에서 절두체 평면 추출
+// Gribb-Hartmann 알고리즘: VP 행렬의 행 조합으로 6개 평면 추출
+planes[0] = row4 + row1   // Left:   x' >= -w
+planes[1] = row4 - row1   // Right:  x' <=  w
+planes[2] = row4 + row2   // Bottom: y' >= -w
+planes[3] = row4 - row2   // Top:    y' <=  w
+planes[4] = row4 + row3   // Near:   z' >= -w (OpenGL) 또는 row3 (DirectX)
+planes[5] = row4 - row3   // Far:    z' <=  w
 
-planes[0] = row4 + row1   // Left
-planes[1] = row4 - row1   // Right
-planes[2] = row4 + row2   // Bottom
-planes[3] = row4 - row2   // Top
-planes[4] = row4 + row3   // Near
-planes[5] = row4 - row3   // Far
+// ★ 중요: 평면 방정식 (A, B, C, D)을 반드시 법선 길이로 정규화해야 함!
+for (int i = 0; i < 6; i++) {
+    float length = sqrt(planes[i].x * planes[i].x + planes[i].y * planes[i].y + planes[i].z * planes[i].z);
+    planes[i] /= length; // 이제 A*x + B*y + C*z + D = 유클리드 부호 있는 거리
+}
 ```
 
 ### 절두체 컬링 (Frustum Culling)
@@ -199,8 +204,9 @@ planes[5] = row4 - row3   // Far
 // 객체의 바운딩 구(Sphere)가 절두체 내에 있는지 검사
 function inFrustum(sphere, planes):
     for plane in planes:
+        // 정규화된 평면과의 거리: dot(plane.normal, sphere.center) + plane.D
         if distanceToPlane(sphere.center, plane) < -sphere.radius:
-            return false    // 절두체 밖 → 렌더링 제외
+            return false    // 바깥쪽으로 반지름 이상 벗어남 → 렌더링 제외
     return true
 ```
 

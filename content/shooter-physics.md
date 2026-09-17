@@ -157,7 +157,7 @@ spreadOffset = vec2(cos(angle), sin(angle)) * radius;
 
 // 가우시안 분포 (중앙 집중, 더 자연스러움)
 // Box-Muller 변환 (《난수 기초》 참고)
-float u1 = randomRange(0, 1);
+float u1 = max(randomRange(0, 1), 1e-7f); // log(0) 방지
 float u2 = randomRange(0, 1);
 float gauss = sqrt(-2.0f * log(u1)) * cos(TWO_PI * u2);
 spreadOffset = gauss * spreadFactor;

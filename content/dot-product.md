@@ -41,13 +41,21 @@ $$\mathbf{a} \cdot \mathbf{b} = |\mathbf{a}| \times |\mathbf{b}| \times \cos(\th
 
 여기서 $\theta$는 두 벡터 사이의 각도다. 이 공식이 말하는 것: 두 벡터가 완전히 같은 방향($\theta=0°$)이면 $\cos(\theta)=1$이 돼서 최댓값이 나오고, 수직($\theta=90°$)이면 $\cos(\theta)=0$이 돼서 0, 정반대($\theta=180°$)면 $\cos(\theta)=-1$이 돼서 최솟값이 나온다.
 
-### 두 정의가 왜 같은가?
+### 두 정의가 왜 같은가? (코사인 제2법칙과의 연결)
 
-단위 벡터(길이가 1인 벡터)로 정규화해서 생각하면 이해가 쉽다. 여기서 $\hat{\mathbf{a}}$는 a를 정규화한 단위 벡터(방향만 남기고 길이를 1로 만든 것), $\hat{\mathbf{b}}$는 b를 정규화한 단위 벡터다. 단위 벡터끼리의 내적은 $\cos(\theta)$ 그 자체가 된다:
+두 벡터 $\mathbf{a}$와 $\mathbf{b}$가 이루는 삼각형에서, 맞은편 변 벡터는 $\mathbf{a} - \mathbf{b}$다.
 
-$$\hat{\mathbf{a}} \cdot \hat{\mathbf{b}} = \cos(\theta)$$
+1. **대수적 전개 (성분 계산)**:
+   $$\|\mathbf{a} - \mathbf{b}\|^2 = (\mathbf{a} - \mathbf{b}) \cdot (\mathbf{a} - \mathbf{b}) = \|\mathbf{a}\|^2 + \|\mathbf{b}\|^2 - 2(\mathbf{a} \cdot_{\text{alg}} \mathbf{b})$$
 
-즉, "방향만 남겼을 때 두 방향이 이루는 각도의 코사인"이 내적이다.
+2. **기하학의 코사인 제2법칙**:
+   $$\|\mathbf{a} - \mathbf{b}\|^2 = \|\mathbf{a}\|^2 + \|\mathbf{b}\|^2 - 2\|\mathbf{a}\|\|\mathbf{b}\|\cos\theta$$
+
+두 식의 우변을 비교하면 $-2$ 뒤의 항이 정확히 일치한다:
+
+$$\mathbf{a} \cdot_{\text{alg}} \mathbf{b} = a_x b_x + a_y b_y + a_z b_z = \|\mathbf{a}\|\|\mathbf{b}\|\cos\theta$$
+
+즉, **좌표 성분끼리 곱해 더한 값**이 곧 **두 벡터의 길이와 사잇각 코사인의 곱**과 수학적으로 완전히 같은 값임이 증명된다.
 
 ---
 
@@ -183,27 +191,43 @@ reflected = tangentComponent - normalComponent
 
 ---
 
-## 5. 반사 벡터
+## 5. 반사 벡터 (Reflection)
 
-앞의 투영과 직결되는 개념이다. 물체가 표면에 부딪혔을 때 튕겨나가는 방향을 계산한다.
+물체가 표면에 부딪혔을 때 튕겨나가는 방향을 계산한다. 당구공, 벽에 튕기는 총알, 셰이더 빛 반사(Specular)의 기본이다.
+
+```text
+               n (법선)
+               ↑
+        \      |      /
+      v  \     |     /  r (반사 벡터)
+          \    |    /
+           ↘   |   ↗
+  ═════════════╩═════════════ (벽/표면)
+               |
+               ↓
+          v_n = (v·n)n (벽 안쪽으로 파고드는 성분)
+```
 
 ### 공식
 
-$$\mathbf{r} = \mathbf{v} - 2 \times (\mathbf{v} \cdot \mathbf{n}) \times \mathbf{n}$$
+$$\mathbf{r} = \mathbf{v} - 2(\mathbf{v} \cdot \mathbf{n})\mathbf{n}$$
 
-$\mathbf{n}$은 표면의 법선(수직 방향), $\mathbf{v}$는 입사 벡터(들어오는 방향)다.
+- $\mathbf{n}$: 표면의 단위 법선 (벽 바깥쪽을 향함)
+- $\mathbf{v}$: 입사 벡터 (벽을 향해 들어가는 속도)
 
-이 공식이 하는 일을 풀어서 보면:
-1. $\mathbf{v} \cdot \mathbf{n}$ = 속도가 표면 방향으로 얼마나 들어가는가
-2. $2 \times (\mathbf{v} \cdot \mathbf{n}) \times \mathbf{n}$ = 그 성분의 두 배를 법선 방향으로 만듦
-3. 원래 속도에서 그걸 빼면 = 법선 방향 성분이 반전됨
+### 왜 이 공식이 작동하는가? (직관)
+1. 속도 $\mathbf{v}$를 표면에 나란한 **접선 성분($\mathbf{v}_t$)**과 표면에 수직인 **법선 성분($\mathbf{v}_n$)**으로 쪼갠다:
+   $$\mathbf{v} = \mathbf{v}_t + \mathbf{v}_n, \qquad \mathbf{v}_n = (\mathbf{v} \cdot \mathbf{n})\mathbf{n}$$
+2. 벽에 부딪히면 접선 성분은 유지되고, **법선 성분만 반대로 뒤집혀야(-)** 튕겨나간다:
+   $$\mathbf{r} = \mathbf{v}_t - \mathbf{v}_n = (\mathbf{v} - \mathbf{v}_n) - \mathbf{v}_n = \mathbf{v} - 2\mathbf{v}_n = \mathbf{v} - 2(\mathbf{v} \cdot \mathbf{n})\mathbf{n}$$
+3. $\mathbf{v}$가 벽을 향해 들어가면 $\mathbf{v} \cdot \mathbf{n} < 0$ (음수)이므로, $-2(\text{음수})\mathbf{n} = +2|\mathbf{v}\cdot\mathbf{n}|\mathbf{n}$이 되어 벽 바깥쪽으로 힘차게 튕겨나온다.
 
 ```text
 // 벽에 부딪힌 공의 반사
-n = normalize(wall.normal)     // 벽의 법선
-v = ball.velocity              // 공의 속도
-reflected = v - 2 × dot(v, n) × n
-ball.velocity = reflected
+vec3 n = normalize(wall.normal);
+vec3 v = ball.velocity;
+vec3 reflected = v - 2.0f * dot(v, n) * n;
+ball.velocity = reflected;
 ```
 
 게임에서 활용: 당구공, 핀볼, 벽에 튕기는 총알, 셰이더 반사광, 음파 반사 등.
